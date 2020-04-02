@@ -4,9 +4,10 @@ var express = require("express");
 var path = require("path");
 // import fs from the node library
 var fs = require("fs");
-// import db.json file into the server to reference
-var noteDb = require("./db/db.json")
-// console.log(noteDb);
+// import db.json file into the server.js file to reference and use fs readFileSync to read contents of the file
+var data = fs.readFileSync("./db/db.json");
+// parse the json file
+var noteDb = JSON.parse(data);
 
 // instantiate a new express app utilizing the express() method
 var app = express();
@@ -16,6 +17,7 @@ var PORT = 8080;
 // middleware parses the request string and converts to a JSON object
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(express.static("public"));
 
 // create the get routes
 
@@ -42,15 +44,18 @@ app.use(express.json());
 // create the POST routes
 
     app.post("/api/notes", function(req, res) {
-        noteDb.push(req.body);
-        // add the new note the db.json file
-        fs.readFile("/db/db.json", "utf-8", function (error){
-        });
-        fs.writeFile("/db/db.json", JSON.stringify(noteDb), function(error) {
-            req.body
-        });
-        res.json(noteDb);
-    });
+       
+        var newNote = req.body;
+        // console.log('New Note: ', req.body)
+        
+        noteDb.push(newNote);
+        // need to read db.json file
+        // fs.readFile(__dirname, "db/db.json")
+        // append newNote to db.json
+        // fs.readFileSync("db/db.json", JSON.stringify(newNote))
+        fs.appendFileSync("db/db.json", ',' + '\n' + JSON.stringify([newNote]))
+        res.json(newNote);
+    }); 
 
     // create the DELETE routes
     
