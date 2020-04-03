@@ -13,7 +13,7 @@ var finalNotesDB = Object.keys(noteDb).map(i => noteDb[i]);
 // instantiate a new express app utilizing the express() method
 var app = express();
 // declare PORT number so local server can find the application
-var PORT = 8080;
+var PORT = process.env.PORT || 8080;
 // middleware parses the request string and converts to a JSON object
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -35,6 +35,11 @@ app.get("/api/notes", function(req, res) {
   // response needs to access the noteDB variable in order to send a response
   res.json(finalNotesDB);
 });
+app.get("/api/notes", function(req, res) {
+  // response needs to access the noteDB variable in order to send a response
+  res.json(finalNotesDB);
+});
+
 // failsafe route
 app.get("*", function(req, res) {
   res.sendFile(path.join(__dirname, "public/index.html"));
