@@ -19,35 +19,32 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("public"));
 
-// create the get routes
-
 // return the index.html file
 app.get("/", function(req, res) {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+  res.sendFile(path.join(__dirname, "/public/index.html"));
 });
-// return the notes.html file
-app.get("/notes", function(req, res) {
-  res.sendFile(path.join(__dirname, "public/notes.html"));
-});
-//  create the API get routes
+
 // set up the notes API
 app.get("/api/notes", function(req, res) {
   // response needs to access the noteDB variable in order to send a response
   res.json(finalNotesDB);
 });
-app.get("/api/notes", function(req, res) {
-  // response needs to access the noteDB variable in order to send a response
-  res.json(finalNotesDB);
+
+// return the notes.html file
+app.get("/notes", function(req, res) {
+  res.sendFile(path.join(__dirname, "/public/notes.html"));
 });
 
 // failsafe route
 app.get("*", function(req, res) {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+  res.sendFile(path.join(__dirname, "/public/index.html"));
 });
 
 // create the POST routes
 
 app.post("/api/notes", function(req, res) {
+  // I had to add finalNotesDB to get the note to render to the page immediately. noteDb pushes them to the db.json file
+  finalNotesDB.push(req.body);
   noteDb.push(req.body);
 
   fs.writeFile("./db/db.json", JSON.stringify(noteDb), function(error) {
@@ -59,9 +56,10 @@ app.post("/api/notes", function(req, res) {
 });
 
 // create the DELETE routes
-// app.delete("/api/notes/delete", function(req, res) {
-//   finalNotesDB.id = res.send("Your note has been deleted");
-// });
+
+app.delete("/api/notes/:id", function(req, res) {
+  finalNotesDB.id = res.send("Your note has been deleted");
+});
 
 // start the server to listen
 app.listen(PORT, function() {
