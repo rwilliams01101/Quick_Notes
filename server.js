@@ -1,67 +1,86 @@
-// import express from the node library
-var express = require("express");
-// import path fromt the node library
-var path = require("path");
-// import fs from the node library
-var fs = require("fs");
-// import db.json file into the server.js file to reference and use fs readFileSync to read contents of the file
-var data = fs.readFileSync("./db/db.json", "utf8");
-// parse the json file
-var noteDb = JSON.parse(data);
-// since noteDb is an object, we need to turn it into an array of objects
-var finalNotesDB = Object.keys(noteDb).map(i => noteDb[i]);
-// instantiate a new express app utilizing the express() method
+// declare dependencies for fs, path, express, db.json,
+var fs = require('fs');
+var path = require('path');
+var express = require('express');
+
+// set app equal to the express method
 var app = express();
-// declare PORT number so local server can find the application
+
+//  notesDB is an array of objects, intialized with the data in db.json
+//  that holds the objects with titles and text of each note
+var notesDB = require('./db/db.json');
+
+// declare port(s) will run in port online OR run on localhost
 var PORT = process.env.PORT || 8080;
-// middleware parses the request string and converts to a JSON object
+
+// middleware, still magic, but something something parse url to request data from server side
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static("public"));
 
-// return the index.html file
-app.get("/", function(req, res) {
-  res.sendFile(path.join(__dirname, "/public/index.html"));
+// still middleware (I think??), grants access to public folder and all contents
+app.use(express.static('public'));
+
+//  get routes
+
+// root route / with callback function passing through request and response
+app.get("/", function (req, res) {
+  // takes response and uses method of express sendFile to direct to index.html (root)
+    res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// set up the notes API
-app.get("/api/notes", function(req, res) {
-  // response needs to access the noteDB variable in order to send a response
-  res.json(finalNotesDB);
+// notes route / with callback function passing through request and response
+app.get("/notes", function (req, res) {
+  // takes response and uses method of express sendFile to direct to notes.html
+    res.sendFile(path.join(__dirname, "public/notes.html"));
 });
 
-// return the notes.html file
-app.get("/notes", function(req, res) {
-  res.sendFile(path.join(__dirname, "/public/notes.html"));
+
+// api routes
+
+// api/notes get route. will pull anything in notesDB array so it can be displayed client-side
+app.get("/api/notes", function (req, res) {
+    // takes the response in JSON format
+    res.json(notesDB);
 });
 
-// failsafe route
-app.get("*", function(req, res) {
-  res.sendFile(path.join(__dirname, "/public/index.html"));
+// api/notes post route.
+app.post('/api/notes', function (req, res) {
+    // will push user input (req.body) into the notesDB array at the end
+    notesDB.push(req.body);
+
+    // over-write db.json with the array containing the new note
+    fs.writeFile('db/db.json', JSON.stringify(notesDB), function (err) {
+        if (err) {
+            throw error;
+        }
+    });
+    // respond with the updated array to be rendered
+    res.json(notesDB)
 });
 
-// create the POST routes
+// api delete route
 
-app.post("/api/notes", function(req, res) {
-  // I had to add finalNotesDB to get the note to render to the page immediately. noteDb pushes them to the db.json file
-  finalNotesDB.push(req.body);
-  noteDb.push(req.body);
+// using express method delete passing in /api/notes/:id <= this is a placeholder for the unique IDs on each note
+app.delete('/api/notes/:id', function (req, res) {
+    // the id for the note to be deleted is in req.params.id
+    // use .splice() to remove the note from the array
+    notesDB.splice(req.params.id, 1)
+    //  over-write db.json again, this time without the note that was deleted
+    fs.writeFile('db/db.json', JSON.stringify(notesDB), function (err) {
+        if (err) {
+            throw error;
+        }
+    })
+    // a default response to the request, this is required
+    res.json(true);
+})
 
-  fs.writeFile("./db/db.json", JSON.stringify(noteDb), function(error) {
-    if (error) {
-      console.log("Your note did not save.");
-    }
-  });
-  res.json(finalNotesDB);
+//  failsafe route. any route not covered in above will default to root
+app.get("*", function (req, res) {
+    res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// create the DELETE routes
-
-app.delete("/api/notes/:id", function(req, res) {
-  finalNotesDB.id = res.send("Your note has been deleted");
-});
-
-// start the server to listen
-app.listen(PORT, function() {
-  console.log("App listening on PORT " + PORT);
+// start the server to listen, console logs message and active port
+app.listen(PORT, function () {
+    console.log("Server listening on: http://localhost:" + PORT);
 });
